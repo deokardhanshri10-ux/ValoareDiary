@@ -35,6 +35,10 @@ export function AddEventModal({
     const [meetingLink, setMeetingLink] = useState('');
     const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
+    // Email fields
+    const [clientEmail, setClientEmail] = useState('');
+    const [hostsEmail, setHostsEmail] = useState('');
+
     if (!isOpen) return null;
 
     const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,7 +211,7 @@ export function AddEventModal({
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black bg-opacity-50">
             <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">Add New Event</h2>
+                    <h2 className="text-xl font-semibold text-gray-900">Schedule New Meeting</h2>
                     <button
                         onClick={resetForm}
                         className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
@@ -274,6 +278,37 @@ export function AddEventModal({
                                 <option key={client.id} value={client.name} />
                             ))}
                         </datalist>
+                    </div>
+
+                    <div>
+                        <label htmlFor="clientEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                            Mail Client
+                        </label>
+                        <input
+                            type="email"
+                            name="clientEmail"
+                            id="clientEmail"
+                            value={clientEmail}
+                            onChange={(e) => setClientEmail(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                            placeholder="client@example.com"
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor="hostsEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                            Mail Hosts / Co-hosts
+                        </label>
+                        <input
+                            type="email"
+                            name="hostsEmail"
+                            id="hostsEmail"
+                            value={hostsEmail}
+                            onChange={(e) => setHostsEmail(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                            placeholder="host@example.com, cohost@example.com"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Separate multiple emails with commas</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -476,7 +511,7 @@ export function AddEventModal({
                             disabled={isSubmitting}
                             className="px-4 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isSubmitting ? 'Adding...' : 'Add Event'}
+                            {isSubmitting ? 'Scheduling...' : 'Schedule Meeting'}
                         </button>
                     </div>
                 </form>
