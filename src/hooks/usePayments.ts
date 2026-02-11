@@ -1,0 +1,126 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { AuthUser } from '../lib/auth';
+import { Payment } from '../types';
+
+export function usePayments(user: AuthUser | null) {
+    const [payments, setPayments] = useState<Payment[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const loadPayments = async () => {
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('payments')
+            .select('*')
+            .eq('organisation_id', user.organisationId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error loading payments:', error);
+            setLoading(false);
+            return;
+        }
+
+        setPayments(data || []);
+        setLoading(false);
+    };
+
+    const addPayment = async (paymentData: Omit<Payment, 'id' | 'created_at' | 'payment_status'>) => {
+        if (!user) return;
+        const { error } = await supabase
+            .from('payments')
+            .insert({
+                ...paymentData,
+                payment_status: {},
+                organisation_id: user.organisationId,
+                created_by_id: user.id,
+                created_by_name: user.fullName,
+            });
+
+        if (error) {
+            console.error('Error adding payment:', error);
+            throw error;
+        }
+
+        await loadPayments();
+    };
+
+    const updatePayment = async (id: string, paymentData: Partial<Payment>) => {
+        if (!user) return;
+        const { error } = await supabase
+            .from('payments')
+            .update(paymentData)
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating payment:', error);
+            throw error;
+        }
+
+        await loadPayments();
+    };
+
+    const deletePayment = async (paymentId: string) => {
+        const { error } = await supabase
+            .from('payments')
+            .delete()
+            .eq('id', paymentId);
+
+        if (error) {
+            console.error('Error deleting payment:', error);
+            throw error;
+        }
+
+        await loadPayments();
+    };
+
+    const togglePaymentStatus = async (payment: Payment, dueDate: string) => {
+        const currentStatus = payment.payment_status[dueDate] || 'unpaid';
+
+        if (currentStatus === 'paid') {
+            return;
+        }
+
+        const updatedPaymentStatus = {
+            ...payment.payment_status,
+            [dueDate]: 'paid',
+        };
+
+        const { error } = await supabase
+            .from('payments')
+            .update({
+                payment_status: updatedPaymentStatus,
+            })
+            .eq('id', payment.id);
+
+        if (error) {
+            console.error('Error updating payment status:', error);
+            throw error;
+        }
+
+        await loadPayments();
+    };
+
+    useEffect(() => {
+        if (user) {
+            loadPayments();
+        } else {
+            setPayments([]);
+            setLoading(false);
+        }
+    }, [user?.id]);
+
+    return {
+        payments,
+        loading,
+        loadPayments,
+        addPayment,
+        updatePayment,
+        deletePayment,
+        togglePaymentStatus,
+    };
+}

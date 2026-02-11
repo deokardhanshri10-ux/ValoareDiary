@@ -160,6 +160,40 @@ export function UserManagement({ user, onClose }: UserManagementProps) {
     }
   };
 
+  const handleDeleteUser = async (userId: string, username: string) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete user "${username}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setError('');
+    setSuccess('');
+    try {
+      // Delete from auth_credentials first
+      const { error: credError } = await supabase
+        .from('auth_credentials')
+        .delete()
+        .eq('user_id', userId);
+
+      if (credError) throw credError;
+
+      // Delete from user_profiles
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileError) throw profileError;
+
+      setSuccess(`User "${username}" deleted successfully`);
+      await loadUsers();
+    } catch (err: any) {
+      console.error('Error deleting user:', err);
+      setError(err.message || 'Failed to delete user');
+    }
+  };
+
   const canManageUsers = user.role === 'manager';
 
   return (
@@ -334,17 +368,16 @@ export function UserManagement({ user, onClose }: UserManagementProps) {
                         ) : (
                           <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {u.role === 'associate-editor' ? 'Associate - Editor' :
-                             u.role === 'associate-viewer' ? 'Associate - Viewer' :
-                             'Manager'}
+                              u.role === 'associate-viewer' ? 'Associate - Viewer' :
+                                'Manager'}
                           </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                          u.is_active
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${u.is_active
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                          }`}>
                           {u.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
@@ -365,26 +398,35 @@ export function UserManagement({ user, onClose }: UserManagementProps) {
                       </td>
                       {canManageUsers && u.id !== user.userId && (
                         <td className="px-4 py-3 text-sm">
-                          <button
-                            onClick={() => handleToggleActive(u.id, u.is_active)}
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                              u.is_active
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                : 'bg-green-100 text-green-700 hover:bg-green-200'
-                            }`}
-                          >
-                            {u.is_active ? (
-                              <>
-                                <UserX className="w-3 h-3" />
-                                Deactivate
-                              </>
-                            ) : (
-                              <>
-                                <UserCheck className="w-3 h-3" />
-                                Activate
-                              </>
-                            )}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleToggleActive(u.id, u.is_active)}
+                              className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${u.is_active
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                }`}
+                            >
+                              {u.is_active ? (
+                                <>
+                                  <UserX className="w-3 h-3" />
+                                  Deactivate
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="w-3 h-3" />
+                                  Activate
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(u.id, u.username)}
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                              title="Delete user permanently"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       )}
                       {canManageUsers && u.id === user.userId && (

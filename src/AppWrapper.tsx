@@ -50,6 +50,8 @@ export function AppWrapper() {
         onCloseUserManagement={() => setShowUserManagement(false)}
         showUserManagement={showUserManagement}
         onShowActivityLog={() => setShowActivityLog(true)}
+        showActivityLog={showActivityLog}
+        onCloseActivityLog={() => setShowActivityLog(false)}
         onShowChangePassword={() => setShowChangePassword(true)}
         showChangePassword={showChangePassword}
         onCloseChangePassword={() => setShowChangePassword(false)}
