@@ -56,12 +56,14 @@ Deno.serve(async (req) => {
                 const reminderMinutes = meeting.reminder_minutes || 30;
                 const reminderTime = new Date(meetingDate.getTime() - (reminderMinutes * 60 * 1000));
 
-                // Check if we're within 1 minute of reminder time
-                const timeDiff = now.getTime() - reminderTime.getTime();
-                const withinWindow = timeDiff >= 0 && timeDiff < 60000; // Within 1 minute
+                // Check if current time is past the reminder time
+                // AND the meeting hasn't started yet (to avoid sending reminders for past meetings)
+                const isPastReminderTime = now.getTime() >= reminderTime.getTime();
+                const isBeforeMeeting = now.getTime() < meetingDate.getTime();
 
-                if (withinWindow) {
+                if (isPastReminderTime && isBeforeMeeting) {
                     remindersToSend.push(meeting);
+
 
                     // Call send-meeting-reminder function
                     const response = await fetch(

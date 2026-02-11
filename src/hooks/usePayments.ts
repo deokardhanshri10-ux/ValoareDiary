@@ -65,6 +65,15 @@ export function usePayments(user: AuthUser | null) {
     };
 
     const deletePayment = async (paymentId: string) => {
+        // Ask for confirmation before deleting
+        const confirmed = window.confirm(
+            'Are you sure you want to delete this payment? This action cannot be undone.'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
         const { error } = await supabase
             .from('payments')
             .delete()

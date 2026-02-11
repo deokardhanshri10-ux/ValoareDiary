@@ -127,6 +127,15 @@ export function useEvents(user: AuthUser | null) {
     };
 
     const deleteEvent = async (eventId: string) => {
+        // Ask for confirmation before deleting
+        const confirmed = window.confirm(
+            'Are you sure you want to delete this event? This action cannot be undone.'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
         const { error } = await supabase
             .from('Meet Schedule Data')
             .delete()

@@ -29,8 +29,14 @@ function createEmailMessage(to: string, subject: string, htmlBody: string, textB
     ];
 
     const message = messageParts.join('\r\n');
-    // Base64url encode
-    return btoa(message).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    // UTF-8 safe base64 encoding
+    const encoder = new TextEncoder();
+    const data = encoder.encode(message);
+    const base64 = btoa(String.fromCharCode(...data));
+
+    // Base64url encode (replace + with -, / with _, remove =)
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 // Generate HTML email template
@@ -127,15 +133,27 @@ function generateEmailText(meeting: any): string {
     return text;
 }
 
+// Simple encryption/decryption functions (base64)
+function simpleDecrypt(encrypted: string): string {
+    return atob(encrypted);
+}
+
+function simpleEncrypt(text: string): string {
+    return btoa(text);
+}
+
 Deno.serve(async (req) => {
     if (req.method === "OPTIONS") {
         return new Response(null, { headers: corsHeaders });
     }
 
     try {
+        console.log('send-meeting-reminder function called');
         const { meeting_id, user_id } = await req.json();
+        console.log('Received request:', { meeting_id, user_id });
 
         if (!meeting_id || !user_id) {
+            console.error('Missing parameters:', { meeting_id, user_id });
             return new Response(
                 JSON.stringify({ error: 'Missing meeting_id or user_id' }),
                 { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -146,6 +164,7 @@ Deno.serve(async (req) => {
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+        console.log('Fetching meeting details for ID:', meeting_id);
         // Get meeting details
         const { data: meeting, error: meetingError } = await supabase
             .from('Meet Schedule Data')
@@ -160,11 +179,13 @@ Deno.serve(async (req) => {
                 { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
+        console.log('Meeting found:', meeting.name);
 
+        console.log('Fetching OAuth tokens for user:', user_id);
         // Get user's Google OAuth tokens
         const { data: oauthData, error: oauthError } = await supabase
             .from('google_oauth_tokens')
-            .select('access_token, refresh_token, token_expiry')
+            .select('access_token_encrypted, refresh_token_encrypted, token_expiry')
             .eq('connected_by_user_id', user_id)
             .eq('is_active', true)
             .single();
@@ -176,8 +197,9 @@ Deno.serve(async (req) => {
                 { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
+        console.log('OAuth tokens found, checking expiry');
 
-        let accessToken = oauthData.access_token;
+        let accessToken = simpleDecrypt(oauthData.access_token_encrypted);
 
         // Check if token is expired and refresh if needed
         const tokenExpiry = new Date(oauthData.token_expiry);
@@ -234,6 +256,7 @@ Deno.serve(async (req) => {
                         event_id: meeting_id,
                         recipient_email: recipient,
                         status: 'sent',
+                        organisation_id: meeting.organisation_id,
                     });
                 } else {
                     const errorData = await response.text();
@@ -246,6 +269,7 @@ Deno.serve(async (req) => {
                         recipient_email: recipient,
                         status: 'failed',
                         error_message: errorData.substring(0, 500),
+                        organisation_id: meeting.organisation_id,
                     });
                 }
             } catch (error) {

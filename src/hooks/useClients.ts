@@ -32,6 +32,15 @@ export function useClients(user: AuthUser | null) {
     };
 
     const deleteClient = async (clientId: string) => {
+        // Ask for confirmation before deleting
+        const confirmed = window.confirm(
+            'Are you sure you want to delete this client? This action cannot be undone.'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
         const { error } = await supabase
             .from('clients')
             .delete()
