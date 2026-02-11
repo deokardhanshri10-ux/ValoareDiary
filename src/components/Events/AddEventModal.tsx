@@ -132,6 +132,9 @@ export function AddEventModal({
             organisation_id: user.organisationId,
             created_by_id: user.id,
             created_by_name: user.fullName,
+            // Email fields for reminders
+            client_email: clientEmail || null,
+            hosts_emails: hostsEmail || null,
         };
 
         const { data, error } = await supabase
