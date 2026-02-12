@@ -1,6 +1,7 @@
 {
   "name": "vite-react-typescript-starter",
   "private": true,
+  "homepage": "https://deokardhanshri10-ux.github.io/ValoareDiary",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
