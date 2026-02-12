@@ -3,6 +3,7 @@ import { SignIn } from './components/SignIn';
 import { AuthenticatedApp } from './components/AuthenticatedApp';
 import { authService, AuthUser } from './lib/auth';
 import App from './App';
+import { useActivityLog } from './hooks/useActivityLog';
 
 export function AppWrapper() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -11,6 +12,7 @@ export function AppWrapper() {
   const [showActivityLog, setShowActivityLog] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showGoogleOAuth, setShowGoogleOAuth] = useState(false);
+  const { logActivity } = useActivityLog();
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
@@ -21,9 +23,15 @@ export function AppWrapper() {
   const handleSignInSuccess = () => {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
+    if (currentUser) {
+      logActivity(currentUser, 'login', 'auth', currentUser.id, { method: 'password' });
+    }
   };
 
   const handleSignOut = () => {
+    if (user) {
+      logActivity(user, 'logout', 'auth', user.id);
+    }
     setUser(null);
   };
 

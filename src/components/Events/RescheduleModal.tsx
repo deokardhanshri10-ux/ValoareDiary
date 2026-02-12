@@ -2,23 +2,30 @@ import { useState } from 'react';
 import { X, Clock } from 'lucide-react';
 import { Event } from '../../types';
 import { supabase } from '../../lib/supabase';
+import { useActivityLog } from '../../hooks/useActivityLog';
+import { AuthUser } from '../../lib/auth';
 
 interface RescheduleModalProps {
     isOpen: boolean;
     onClose: () => void;
     event: Event | null;
+    event: Event | null;
     onEventUpdated: () => void;
+    user: AuthUser;
 }
 
 export function RescheduleModal({
     isOpen,
     onClose,
     event,
+
     onEventUpdated,
+    user
 }: RescheduleModalProps) {
     const [rescheduleDate, setRescheduleDate] = useState('');
     const [rescheduleTime, setRescheduleTime] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { logActivity } = useActivityLog();
 
     if (!isOpen || !event) return null;
 
@@ -47,6 +54,21 @@ export function RescheduleModal({
         }
 
         onEventUpdated();
+
+        // Log activity
+        logActivity(
+            user,
+            'update',
+            'Meet Schedule Data',
+            event.id,
+            {
+                oldDate: event.date,
+                oldTime: event.time,
+                newDate: rescheduleDate,
+                newTime: rescheduleTime
+            }
+        );
+
         onClose();
         setRescheduleDate('');
         setRescheduleTime('');

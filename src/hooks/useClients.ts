@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { AuthUser } from '../lib/auth';
 import { Client, ClientNote } from '../types';
+import { useActivityLog } from './useActivityLog';
 
 export function useClients(user: AuthUser | null) {
+    const { logActivity } = useActivityLog();
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
     const [clientNotes, setClientNotes] = useState<ClientNote[]>([]);
@@ -50,6 +52,15 @@ export function useClients(user: AuthUser | null) {
             console.error('Error deleting client:', error);
             throw error;
         }
+
+        // Log activity
+        await logActivity(
+            user,
+            'delete',
+            'clients',
+            clientId,
+            { clientId }
+        );
 
         await loadClients();
     };

@@ -4,6 +4,7 @@ import { Client, Event } from '../../types';
 import { AuthUser } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
 import { formatFileSize } from '../../utils/fileUtils';
+import { useActivityLog } from '../../hooks/useActivityLog';
 
 interface AddEventModalProps {
     isOpen: boolean;
@@ -22,7 +23,7 @@ export function AddEventModal({
     clients,
     onShowOAuth
 }: AddEventModalProps) {
-    const [meetingType, setMeetingType] = useState<'online' | 'face_to_face' | 'on_call'>('online');
+    const [meetingType, setMeetingType] = useState<'online' | 'facetoface' | 'on_call'>('online');
     const [showReminderTime, setShowReminderTime] = useState(false);
     const [reminderMinutes, setReminderMinutes] = useState('30');
     const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
@@ -34,6 +35,7 @@ export function AddEventModal({
     const [startTime, setStartTime] = useState('');
     const [meetingLink, setMeetingLink] = useState('');
     const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+    const { logActivity } = useActivityLog();
 
     // Email fields
     const [clientEmail, setClientEmail] = useState('');
@@ -128,7 +130,7 @@ export function AddEventModal({
             repeat_event: repeatEvent,
             alert_type: alertType || 'none',
             reminder_minutes: alertType === 'remind' ? parseInt(reminderMinutes) : 30,
-            meeting_mode: 'audio',
+            meeting_mode: meetingType === 'online' ? 'video' : meetingType === 'on_call' ? 'audio' : null,
             organisation_id: user.organisationId,
             created_by_id: user.id,
             created_by_name: user.fullName,
@@ -136,6 +138,8 @@ export function AddEventModal({
             client_email: clientEmail || null,
             hosts_emails: hostsEmail || null,
         };
+
+        console.log('Attempting to insert meeting with data:', supabaseData);
 
         const { data, error } = await supabase
             .from('Meet Schedule Data')
@@ -145,7 +149,8 @@ export function AddEventModal({
 
         if (error) {
             console.error('Error adding event:', error);
-            alert('Failed to add event. Please try again.');
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            alert(`Failed to add event: ${error.message || 'Please try again.'}`);
             setIsSubmitting(false);
             return;
         }
@@ -192,6 +197,15 @@ export function AddEventModal({
             }
 
             onEventAdded();
+
+            // Log activity
+            logActivity(
+                user,
+                'create',
+                'Meet Schedule Data',
+                data.id,
+                { name: clientName, meetingType, startDate, startTime }
+            );
         }
 
         resetForm();
@@ -239,8 +253,8 @@ export function AddEventModal({
                         </button>
                         <button
                             type="button"
-                            onClick={() => setMeetingType('face_to_face')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${meetingType === 'face_to_face'
+                            onClick={() => setMeetingType('facetoface')}
+                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${meetingType === 'facetoface'
                                 ? 'bg-amber-50 border-amber-500 text-amber-700'
                                 : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                                 }`}
@@ -386,7 +400,7 @@ export function AddEventModal({
                         </div>
                     )}
 
-                    {meetingType === 'face_to_face' && (
+                    {meetingType === 'facetoface' && (
                         <div>
                             <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
                                 Location

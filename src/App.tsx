@@ -13,10 +13,12 @@ import { ClientList } from './components/Clients/ClientList';
 import { HistoryView } from './components/History/HistoryView';
 import { EventModal } from './components/Events/EventModal';
 import { AddEventModal } from './components/Events/AddEventModal';
+import { RescheduleModal } from './components/Events/RescheduleModal';
 import { PaymentModal } from './components/Payments/PaymentModal';
 import { ClientModal } from './components/Clients/ClientModal';
+import { ClientImportModal } from './components/Clients/ClientImportModal';
 import { ClientDetailsModal } from './components/Clients/ClientDetailsModal';
-import { ReminderModal } from './components/Calendar/ReminderModal';
+
 
 import { useEvents } from './hooks/useEvents';
 import { usePayments } from './hooks/usePayments';
@@ -65,9 +67,12 @@ export default function App({
   // Modals state
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [eventToReschedule, setEventToReschedule] = useState<Event | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [showClientModal, setShowClientModal] = useState(false);
+  const [showClientImportModal, setShowClientImportModal] = useState(false);
   const [selectedClientForDetails, setSelectedClientForDetails] = useState<Client | null>(null);
 
   const [showOAuthForMeetLink, setShowOAuthForMeetLink] = useState(false);
@@ -77,11 +82,7 @@ export default function App({
   const {
     events,
     loadEvents,
-    deleteEvent,
-    activeReminder,
-    setActiveReminder,
-    showReminderAlert,
-    setShowReminderAlert
+    deleteEvent
   } = useEvents(user);
 
   const {
@@ -135,20 +136,14 @@ export default function App({
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
         onReschedule={(event) => {
-          // Reuse EventModal for rescheduling or implement separate RescheduleModal if complex.
-          // EventModal.tsx handles reschedule via RescheduleModal internally?
-          // Let's check EventModal.tsx. It seems it imports RescheduleModal!
-          // If EventModal handles it, I don't need to do anything here except close/refresh.
-          // EventModal props don't include 'onReschedule' in the interface I viewed?
-          // Step 210: EventModal has `onReschedule` prop?
-          // Wait, I didn't view EventModal interface recently.
-          // But if I pass `onReschedule`, it probably triggers it.
-          // Actually, if EventModal handles it internally, I might not need to pass it?
-          // I'll assume EventModal handles it or I'll fix it if needed.
-          // Just in case, I'll refresh events.
-          loadEvents(false);
+          setEventToReschedule(event);
+          setShowRescheduleModal(true);
+          setSelectedEvent(null);
         }}
-        onDelete={deleteEvent}
+        onDelete={async (eventId) => {
+          await deleteEvent(eventId);
+          setSelectedEvent(null);
+        }}
         user={user}
         onEventUpdated={() => loadEvents(false)}
       />
@@ -184,6 +179,13 @@ export default function App({
         onClientAdded={loadClients}
       />
 
+      <ClientImportModal
+        isOpen={showClientImportModal}
+        onClose={() => setShowClientImportModal(false)}
+        user={user}
+        onClientsImported={loadClients}
+      />
+
       <ClientDetailsModal
         isOpen={!!selectedClientForDetails}
         onClose={() => setSelectedClientForDetails(null)}
@@ -198,11 +200,19 @@ export default function App({
         user={user}
       />
 
-      <ReminderModal
-        activeReminder={activeReminder}
+
+
+      <RescheduleModal
+        isOpen={showRescheduleModal}
         onClose={() => {
-          setShowReminderAlert(false);
-          setActiveReminder(null);
+          setShowRescheduleModal(false);
+          setEventToReschedule(null);
+        }}
+        event={eventToReschedule}
+        onEventUpdated={() => {
+          loadEvents(false);
+          setShowRescheduleModal(false);
+          setEventToReschedule(null);
         }}
       />
 
@@ -425,6 +435,7 @@ export default function App({
             events={events}
             loading={clientsLoading}
             onAddClient={() => setShowClientModal(true)}
+            onImportClients={() => setShowClientImportModal(true)}
             onDeleteClient={deleteClient}
             user={user}
             onSelectClient={(client) => {

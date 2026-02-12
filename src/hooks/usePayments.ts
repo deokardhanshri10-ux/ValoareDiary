@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { AuthUser } from '../lib/auth';
 import { Payment } from '../types';
+import { useActivityLog } from './useActivityLog';
 
 export function usePayments(user: AuthUser | null) {
+    const { logActivity } = useActivityLog();
     const [payments, setPayments] = useState<Payment[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -39,7 +41,10 @@ export function usePayments(user: AuthUser | null) {
                 organisation_id: user.organisationId,
                 created_by_id: user.id,
                 created_by_name: user.fullName,
-            });
+
+            })
+            .select()
+            .maybeSingle();
 
         if (error) {
             console.error('Error adding payment:', error);
@@ -47,6 +52,15 @@ export function usePayments(user: AuthUser | null) {
         }
 
         await loadPayments();
+
+        // Log activity
+        logActivity(
+            user,
+            'create',
+            'payments',
+            '', // We don't have the ID from insert unless we select it.
+            paymentData
+        );
     };
 
     const updatePayment = async (id: string, paymentData: Partial<Payment>) => {
@@ -60,6 +74,15 @@ export function usePayments(user: AuthUser | null) {
             console.error('Error updating payment:', error);
             throw error;
         }
+
+        // Log activity
+        logActivity(
+            user,
+            'update',
+            'payments',
+            id,
+            paymentData
+        );
 
         await loadPayments();
     };
@@ -83,6 +106,15 @@ export function usePayments(user: AuthUser | null) {
             console.error('Error deleting payment:', error);
             throw error;
         }
+
+        // Log activity
+        logActivity(
+            user,
+            'delete',
+            'payments',
+            paymentId,
+            { paymentId }
+        );
 
         await loadPayments();
     };

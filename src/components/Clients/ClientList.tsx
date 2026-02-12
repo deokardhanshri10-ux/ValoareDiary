@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Plus, Trash2, Search, X } from 'lucide-react';
+import { Users, Plus, Trash2, Search, X, FileSpreadsheet } from 'lucide-react';
 import { Client, Event as AppEvent } from '../../types';
 import { AuthUser } from '../../lib/auth';
 
@@ -11,6 +11,7 @@ interface ClientListProps {
     onSelectClient: (client: Client) => void;
     onDeleteClient: (id: string) => void;
     onAddClient: () => void;
+    onImportClients: () => void;
 }
 
 export function ClientList({
@@ -21,6 +22,7 @@ export function ClientList({
     onSelectClient,
     onDeleteClient,
     onAddClient,
+    onImportClients,
 }: ClientListProps) {
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -57,14 +59,24 @@ export function ClientList({
                         </div>
 
                         {canEdit && (
-                            <button
-                                onClick={onAddClient}
-                                className="flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
-                            >
-                                <Plus className="w-4 h-4" />
-                                <span className="hidden sm:inline">Add Client</span>
-                                <span className="sm:hidden">Add</span>
-                            </button>
+                            <>
+                                <button
+                                    onClick={onImportClients}
+                                    className="flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    <FileSpreadsheet className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Import Clients</span>
+                                    <span className="sm:hidden">Import</span>
+                                </button>
+                                <button
+                                    onClick={onAddClient}
+                                    className="flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Add Client</span>
+                                    <span className="sm:hidden">Add</span>
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>

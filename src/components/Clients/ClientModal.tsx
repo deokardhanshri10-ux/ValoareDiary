@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, User } from 'lucide-react';
 import { AuthUser } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
+import { useActivityLog } from '../../hooks/useActivityLog';
 
 interface ClientModalProps {
     isOpen: boolean;
@@ -17,6 +18,7 @@ export function ClientModal({
     onClientAdded,
 }: ClientModalProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { logActivity } = useActivityLog();
 
     if (!isOpen) return null;
 
@@ -44,6 +46,16 @@ export function ClientModal({
         }
 
         onClientAdded();
+
+        // Log activity
+        logActivity(
+            user,
+            'create',
+            'clients',
+            '', // No ID returned by insert unless we select it. Let's try to get it.
+            { name, type }
+        );
+
         onClose();
         setIsSubmitting(false);
     };

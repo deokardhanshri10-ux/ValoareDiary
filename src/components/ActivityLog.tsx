@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, History, Filter, Download } from 'lucide-react';
+import { X, History, Filter, Download, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { AuthUser } from '../lib/auth';
 
@@ -15,6 +15,7 @@ interface ActivityRecord {
   table_name: string;
   record_id: string;
   created_at: string;
+  new_data?: any;
 }
 
 export function ActivityLog({ user, onClose }: ActivityLogProps) {
@@ -24,10 +25,41 @@ export function ActivityLog({ user, onClose }: ActivityLogProps) {
   const [filterAction, setFilterAction] = useState<string>('all');
   const [filterUser, setFilterUser] = useState<string>('all');
   const [uniqueUsers, setUniqueUsers] = useState<string[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     loadActivities();
+    loadUsers();
   }, []);
+
+  const loadUsers = async () => {
+    try {
+      // 1. Get user profiles for this organisation
+      const { data: profiles, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('organisation_id', user.organisationId);
+
+      if (profileError) throw profileError;
+
+      const userIds = profiles?.map(u => u.id) || [];
+
+      if (userIds.length === 0) return;
+
+      // 2. Get usernames from auth_credentials
+      const { data: credentials, error: credError } = await supabase
+        .from('auth_credentials')
+        .select('username')
+        .in('user_id', userIds);
+
+      if (credError) throw credError;
+
+      const usernames = credentials?.map(c => c.username) || [];
+      setUniqueUsers(usernames.sort());
+    } catch (err) {
+      console.error('Error loading users for filter:', err);
+    }
+  };
 
   const loadActivities = async () => {
     setLoading(true);
@@ -35,7 +67,7 @@ export function ActivityLog({ user, onClose }: ActivityLogProps) {
     try {
       const { data, error } = await supabase
         .from('activity_log')
-        .select('id, username, action_type, table_name, record_id, created_at')
+        .select('id, username, action_type, table_name, record_id, created_at, new_data')
         .eq('organisation_id', user.organisationId)
         .order('created_at', { ascending: false })
         .limit(500);
@@ -44,8 +76,8 @@ export function ActivityLog({ user, onClose }: ActivityLogProps) {
 
       setActivities(data || []);
 
-      const users = Array.from(new Set((data || []).map(a => a.username)));
-      setUniqueUsers(users);
+      setActivities(data || []);
+      // uniqueUsers is now loaded from loadUsers()
     } catch (err) {
       console.error('Error loading activities:', err);
       setError('Failed to load activity log');
@@ -113,6 +145,7 @@ export function ActivityLog({ user, onClose }: ActivityLogProps) {
             <div>
               <h2 className="text-xl font-bold text-gray-900">Activity Log</h2>
               <p className="text-sm text-gray-600">All user activities in your organisation</p>
+
             </div>
           </div>
           <button
@@ -186,32 +219,64 @@ export function ActivityLog({ user, onClose }: ActivityLogProps) {
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Action</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Table</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Record ID</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Details</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredActivities.map((activity) => (
-                    <tr key={activity.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        <div>{new Date(activity.created_at).toLocaleDateString()}</div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(activity.created_at).toLocaleTimeString()}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">
-                        {activity.username}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getActionColor(activity.action_type)}`}>
-                          {activity.action_type}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {activity.table_name}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 font-mono text-xs">
-                        {activity.record_id || '-'}
-                      </td>
-                    </tr>
+                    <>
+                      <tr key={activity.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <div>{new Date(activity.created_at).toLocaleDateString()}</div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(activity.created_at).toLocaleTimeString()}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                          {activity.username}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getActionColor(activity.action_type)}`}>
+                            {activity.action_type}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {activity.table_name}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500 font-mono text-xs">
+                          {activity.record_id || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {activity.new_data && (
+                            <button
+                              onClick={() => setExpandedId(expandedId === activity.id ? null : activity.id)}
+                              className="text-gray-400 hover:text-blue-500 focus:outline-none"
+                            >
+                              {expandedId === activity.id ? (
+                                <ChevronUp className="w-5 h-5" />
+                              ) : (
+                                <ChevronDown className="w-5 h-5" />
+                              )}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      {expandedId === activity.id && activity.new_data && (
+                        <tr className="bg-gray-50">
+                          <td colSpan={6} className="px-4 py-3">
+                            <div className="bg-white p-3 rounded border border-gray-200">
+                              <h4 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider flex items-center gap-1">
+                                <Info className="w-3 h-3" />
+                                Change Details
+                              </h4>
+                              <pre className="text-xs text-gray-700 font-mono whitespace-pre-wrap overflow-x-auto">
+                                {JSON.stringify(activity.new_data, null, 2)}
+                              </pre>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   ))}
                 </tbody>
               </table>
