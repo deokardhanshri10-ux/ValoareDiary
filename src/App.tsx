@@ -95,13 +95,9 @@ export default function App({
 
   const {
     clients,
-    clientNotes,
     loading: clientsLoading,
     loadClients,
-    deleteClient,
-    loadClientNotes,
-    addNote,
-    deleteNote
+    deleteClient
   } = useClients(user);
 
   const {
@@ -190,14 +186,9 @@ export default function App({
         isOpen={!!selectedClientForDetails}
         onClose={() => setSelectedClientForDetails(null)}
         client={selectedClientForDetails}
-        notes={clientNotes}
-        loadingNotes={clientsLoading}
         events={events}
         history={history}
         payments={payments}
-        onAddNote={(content) => addNote(selectedClientForDetails!.id, content)}
-        onDeleteNote={(noteId) => deleteNote(noteId, selectedClientForDetails!.id)}
-        user={user}
       />
 
 
@@ -214,6 +205,7 @@ export default function App({
           setShowRescheduleModal(false);
           setEventToReschedule(null);
         }}
+        user={user}
       />
 
       {showUserManagement && (
@@ -397,6 +389,7 @@ export default function App({
             currentDate={currentDate}
             events={events}
             payments={payments}
+            user={user}
             onSelectEvent={setSelectedEvent}
             onTogglePaymentStatus={togglePaymentStatus}
           />
@@ -440,7 +433,6 @@ export default function App({
             user={user}
             onSelectClient={(client) => {
               setSelectedClientForDetails(client);
-              loadClientNotes(client.id);
             }}
           />
         )}
