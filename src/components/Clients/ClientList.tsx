@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Plus, Trash2, Search, X, FileSpreadsheet } from 'lucide-react';
+import { Users, Plus, Trash2, X, FileSpreadsheet } from 'lucide-react';
 import { Client, Event as AppEvent } from '../../types';
 import { AuthUser } from '../../lib/auth';
 
@@ -30,7 +30,7 @@ export function ClientList({
         client.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const canEdit = user.role === 'manager' || user.role === 'associate_editor';
+    const canEdit = user.role === 'manager' || user.role === 'associate-editor';
     const canDelete = user.role === 'manager';
 
     return (

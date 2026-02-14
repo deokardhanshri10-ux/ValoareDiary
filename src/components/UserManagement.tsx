@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Eye, EyeOff, UserPlus, Lock, UserX, UserCheck, Trash2 } from 'lucide-react';
+import { X, Eye, EyeOff, UserPlus, UserX, UserCheck, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { AuthUser } from '../lib/auth';
 
@@ -96,7 +96,7 @@ export function UserManagement({ user, onClose }: UserManagementProps) {
     try {
       const email = `${username.toLowerCase().replace(/\s+/g, '')}@temp.local`;
 
-      const { data, error } = await supabase.rpc('create_user_with_credentials', {
+      const { error } = await supabase.rpc('create_user_with_credentials', {
         p_email: email,
         p_username: username.toLowerCase(),
         p_password: password,
@@ -170,21 +170,11 @@ export function UserManagement({ user, onClose }: UserManagementProps) {
     setError('');
     setSuccess('');
     try {
-      // Delete from auth_credentials first
-      const { error: credError } = await supabase
-        .from('auth_credentials')
-        .delete()
-        .eq('user_id', userId);
+      const { error } = await supabase.rpc('delete_user_permanently', {
+        p_user_id: userId,
+      });
 
-      if (credError) throw credError;
-
-      // Delete from user_profiles
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .delete()
-        .eq('id', userId);
-
-      if (profileError) throw profileError;
+      if (error) throw error;
 
       setSuccess(`User "${username}" deleted successfully`);
       await loadUsers();
@@ -402,8 +392,8 @@ export function UserManagement({ user, onClose }: UserManagementProps) {
                             <button
                               onClick={() => handleToggleActive(u.id, u.is_active)}
                               className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${u.is_active
-                                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                : 'bg-green-100 text-green-700 hover:bg-green-200'
                                 }`}
                             >
                               {u.is_active ? (

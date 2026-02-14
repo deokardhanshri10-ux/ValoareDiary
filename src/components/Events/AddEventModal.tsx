@@ -23,8 +23,8 @@ export function AddEventModal({
     clients,
     onShowOAuth
 }: AddEventModalProps) {
-    const [meetingType, setMeetingType] = useState<'online' | 'facetoface' | 'on_call'>('online');
-    const [showReminderTime, setShowReminderTime] = useState(false);
+    const [meetingType, setMeetingType] = useState<'online' | 'in_person' | 'on_call'>('online');
+    const [showReminderTime, setShowReminderTime] = useState(true);
     const [reminderMinutes, setReminderMinutes] = useState('30');
     const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,6 +33,7 @@ export function AddEventModal({
     const [clientName, setClientName] = useState('');
     const [startDate, setStartDate] = useState('');
     const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
     const [meetingLink, setMeetingLink] = useState('');
     const [isGeneratingLink, setIsGeneratingLink] = useState(false);
     const { logActivity } = useActivityLog();
@@ -118,6 +119,7 @@ export function AddEventModal({
             is_online: meetingType === 'online' || meetingType === 'on_call',
             start_date: startDate,
             start_time: startTime,
+            end_time: endTime || null,
             location: meetingType === 'online'
                 ? 'Online'
                 : meetingType === 'on_call'
@@ -204,7 +206,7 @@ export function AddEventModal({
                 'create',
                 'Meet Schedule Data',
                 data.id,
-                { name: clientName, meetingType, startDate, startTime }
+                { name: clientName, meetingType, startDate, startTime, endTime }
             );
         }
 
@@ -220,6 +222,7 @@ export function AddEventModal({
         setClientName('');
         setStartDate('');
         setStartTime('');
+        setEndTime('');
         setMeetingLink('');
         setIsSubmitting(false);
     };
@@ -253,14 +256,14 @@ export function AddEventModal({
                         </button>
                         <button
                             type="button"
-                            onClick={() => setMeetingType('facetoface')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${meetingType === 'facetoface'
+                            onClick={() => setMeetingType('in_person')}
+                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${meetingType === 'in_person'
                                 ? 'bg-amber-50 border-amber-500 text-amber-700'
                                 : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                                 }`}
                         >
                             <Users className="w-4 h-4" />
-                            Face to Face
+                            In person
                         </button>
                         <button
                             type="button"
@@ -328,7 +331,7 @@ export function AddEventModal({
                         <p className="text-xs text-gray-500 mt-1">Separate multiple emails with commas</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                         <div>
                             <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
                                 Date
@@ -345,7 +348,7 @@ export function AddEventModal({
                         </div>
                         <div>
                             <label htmlFor="startTime" className="block text-sm font-medium text-gray-700 mb-2">
-                                Time
+                                Start Time
                             </label>
                             <input
                                 type="time"
@@ -354,6 +357,19 @@ export function AddEventModal({
                                 required
                                 value={startTime}
                                 onChange={(e) => setStartTime(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="endTime" className="block text-sm font-medium text-gray-700 mb-2">
+                                End Time
+                            </label>
+                            <input
+                                type="time"
+                                name="endTime"
+                                id="endTime"
+                                value={endTime}
+                                onChange={(e) => setEndTime(e.target.value)}
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                             />
                         </div>
@@ -400,7 +416,7 @@ export function AddEventModal({
                         </div>
                     )}
 
-                    {meetingType === 'facetoface' && (
+                    {meetingType === 'in_person' && (
                         <div>
                             <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
                                 Location
@@ -423,6 +439,7 @@ export function AddEventModal({
                         <select
                             name="alertType"
                             id="alertType"
+                            defaultValue="remind"
                             onChange={(e) => setShowReminderTime(e.target.value === 'remind')}
                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         >

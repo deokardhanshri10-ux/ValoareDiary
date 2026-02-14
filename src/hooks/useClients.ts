@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { AuthUser } from '../lib/auth';
-import { Client, ClientNote } from '../types';
+import { Client } from '../types';
 import { useActivityLog } from './useActivityLog';
 
 export function useClients(user: AuthUser | null) {
     const { logActivity } = useActivityLog();
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
-    const [clientNotes, setClientNotes] = useState<ClientNote[]>([]);
-    const [notesLoading, setNotesLoading] = useState(false);
 
     const loadClients = async () => {
         if (!user) {
@@ -65,55 +63,6 @@ export function useClients(user: AuthUser | null) {
         await loadClients();
     };
 
-    const loadClientNotes = async (clientId: string) => {
-        setNotesLoading(true);
-        const { data, error } = await supabase
-            .from('client_notes')
-            .select('*')
-            .eq('client_id', clientId)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            console.error('Error loading client notes:', error);
-            setNotesLoading(false);
-            return;
-        }
-
-        setClientNotes(data || []);
-        setNotesLoading(false);
-    };
-
-    const addNote = async (clientId: string, noteContent: string) => {
-        if (!user) return;
-        const { error } = await supabase
-            .from('client_notes')
-            .insert({
-                client_id: clientId,
-                note_content: noteContent.trim(),
-                organisation_id: user.organisationId
-            });
-
-        if (error) {
-            console.error('Error adding note:', error);
-            throw error;
-        }
-
-        await loadClientNotes(clientId);
-    };
-
-    const deleteNote = async (noteId: string, clientId: string) => {
-        const { error } = await supabase
-            .from('client_notes')
-            .delete()
-            .eq('id', noteId);
-
-        if (error) {
-            console.error('Error deleting note:', error);
-            throw error;
-        }
-
-        await loadClientNotes(clientId);
-    };
 
     useEffect(() => {
         if (user) {
@@ -128,12 +77,6 @@ export function useClients(user: AuthUser | null) {
         clients,
         loading,
         loadClients,
-        deleteClient,
-        clientNotes,
-        notesLoading,
-        loadClientNotes,
-        addNote,
-        deleteNote,
-        setClientNotes
+        deleteClient
     };
 }

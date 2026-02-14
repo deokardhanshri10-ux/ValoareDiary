@@ -71,19 +71,19 @@ export function ListView({ events, onSelectEvent }: ListViewProps) {
                                                 <div className="flex flex-wrap items-center gap-4 mt-1 text-sm text-gray-500">
                                                     <div className="flex items-center gap-1.5">
                                                         <Clock className="w-4 h-4" />
-                                                        {event.time}
+                                                        {event.time}{event.endTime ? ` - ${event.endTime}` : ''}
                                                     </div>
                                                     <div className="flex items-center gap-1.5">
                                                         <MapPin className="w-4 h-4" />
-                                                        {event.location}
+                                                        {event.location === 'Face to Face' ? 'In person' : event.location}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className={`px-3 py-1 rounded-full text-xs font-medium self-start sm:self-center ${event.alert_type === 'remind'
-                                                ? 'bg-amber-100 text-amber-800'
-                                                : 'bg-gray-100 text-gray-800'
+                                            ? 'bg-amber-100 text-amber-800'
+                                            : 'bg-gray-100 text-gray-800'
                                             }`}>
                                             {event.alert_type === 'remind' ? 'Reminder Set' : 'No Reminder'}
                                         </div>

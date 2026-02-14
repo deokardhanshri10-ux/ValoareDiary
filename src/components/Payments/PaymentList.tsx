@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Calendar, IndianRupee, Users, Trash2, Pencil, Search, Filter } from 'lucide-react';
 import { Payment } from '../../types';
 import { AuthUser } from '../../lib/auth';
+import { PaymentMethodModal } from './PaymentMethodModal';
 
 interface PaymentListProps {
     payments: Payment[];
@@ -9,7 +10,7 @@ interface PaymentListProps {
     user: AuthUser;
     onEdit: (payment: Payment) => void;
     onDelete: (id: string) => void;
-    onToggleStatus: (payment: Payment, dateKey: string) => void;
+    onToggleStatus: (payment: Payment, dateKey: string, method: string) => void;
 }
 
 export function PaymentList({
@@ -24,10 +25,13 @@ export function PaymentList({
     const [frequencyFilter, setFrequencyFilter] = useState('all');
     const [methodFilter, setMethodFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [periodFilter, setPeriodFilter] = useState<'this_month' | 'all'>('this_month');
+    const [methodModalOpen, setMethodModalOpen] = useState(false);
+    const [selectedPayment, setSelectedPayment] = useState<{ payment: Payment, dateKey: string } | null>(null);
 
-    const canEdit = user.role === 'manager' || user.role === 'associate_editor';
+    const canEdit = user.role === 'manager' || user.role === 'associate-editor';
     const canDelete = user.role === 'manager';
-    const isViewer = user.role === 'associate_viewer';
+    const isViewer = user.role === 'associate-viewer';
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -70,7 +74,30 @@ export function PaymentList({
             return false;
         }
 
+        // Period Filter
+        if (periodFilter === 'this_month') {
+            const date = new Date(dateKey);
+            if (date.getMonth() !== today.getMonth() || date.getFullYear() !== today.getFullYear()) {
+                return false;
+            }
+        }
+
         return true;
+    });
+
+    // Global Sorting: Unpaid first (soonest first), then Paid (most recent first)
+    const sortedPayments = [...filteredPayments].sort((a, b) => {
+        const statusA = a.payment.payment_status[a.dateKey] || 'unpaid';
+        const statusB = b.payment.payment_status[b.dateKey] || 'unpaid';
+
+        if (statusA === 'unpaid' && statusB === 'paid') return -1;
+        if (statusA === 'paid' && statusB === 'unpaid') return 1;
+
+        if (statusA === 'unpaid') {
+            return a.date.getTime() - b.date.getTime();
+        } else {
+            return b.date.getTime() - a.date.getTime();
+        }
     });
 
     // Group by date for display
@@ -147,12 +174,22 @@ export function PaymentList({
                         <option value="upi">UPI</option>
                     </select>
 
-                    {(statusFilter !== 'all' || frequencyFilter !== 'all' || methodFilter !== 'all' || searchTerm) && (
+                    <select
+                        value={periodFilter}
+                        onChange={(e) => setPeriodFilter(e.target.value as 'this_month' | 'all')}
+                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-emerald-700"
+                    >
+                        <option value="this_month">This Month</option>
+                        <option value="all">All Payments</option>
+                    </select>
+
+                    {(statusFilter !== 'all' || frequencyFilter !== 'all' || methodFilter !== 'all' || periodFilter !== 'this_month' || searchTerm) && (
                         <button
                             onClick={() => {
                                 setStatusFilter('all');
                                 setFrequencyFilter('all');
                                 setMethodFilter('all');
+                                setPeriodFilter('this_month');
                                 setSearchTerm('');
                             }}
                             className="text-sm text-red-600 hover:text-red-700 hover:underline px-2"
@@ -169,126 +206,125 @@ export function PaymentList({
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
                         <p className="text-gray-500 text-sm mt-3">Loading payments...</p>
                     </div>
-                ) : Object.keys(groupedPayments).length === 0 ? (
+                ) : sortedPayments.length === 0 ? (
                     <div className="p-12 text-center">
                         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 mb-4">
                             <IndianRupee className="w-6 h-6 text-emerald-600" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900">No payments found</h3>
                         <p className="mt-1 text-gray-500">
-                            {searchTerm || statusFilter !== 'all' || frequencyFilter !== 'all' || methodFilter !== 'all'
+                            {searchTerm || statusFilter !== 'all' || frequencyFilter !== 'all' || methodFilter !== 'all' || periodFilter !== 'this_month'
                                 ? 'No payments found matching your filters.'
                                 : 'No payments have been scheduled yet.'}
                         </p>
                     </div>
                 ) : (
-                    Object.entries(groupedPayments)
-                        .sort(([, a], [, b]) => a[0].date.getTime() - b[0].date.getTime())
-                        .map(([displayDateKey, paymentsForDate]) => (
-                            <div key={displayDateKey} className="p-6">
-                                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
-                                    <Calendar className="w-4 h-4 text-emerald-600" />
-                                    <h3 className="text-sm font-semibold text-gray-900">{displayDateKey}</h3>
-                                    <span className="text-xs text-gray-500">
-                                        ({paymentsForDate.length} payment{paymentsForDate.length !== 1 ? 's' : ''})
-                                    </span>
-                                </div>
-                                <div className="space-y-3">
-                                    {paymentsForDate.map(({ payment, dateKey, date }) => {
-                                        const status = payment.payment_status[dateKey] || 'unpaid';
-                                        const paymentDate = new Date(date);
-                                        paymentDate.setHours(0, 0, 0, 0);
-                                        const isPaymentDatePassed = paymentDate.getTime() <= today.getTime();
+                    <div className="space-y-4 p-6">
+                        {sortedPayments.map(({ payment, dateKey, date }) => {
+                            const status = payment.payment_status[dateKey] || 'unpaid';
+                            const displayDate = date.toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                            });
 
-                                        const dueDateIndex = payment.due_dates.findIndex(d => d === dateKey);
-                                        const displayAmount = payment.amounts && payment.amounts.length > dueDateIndex && dueDateIndex >= 0
-                                            ? payment.amounts[dueDateIndex]
-                                            : payment.amount;
+                            const dueDateIndex = payment.due_dates.findIndex(d => d === dateKey);
+                            const displayAmount = payment.amounts && payment.amounts.length > dueDateIndex && dueDateIndex >= 0
+                                ? payment.amounts[dueDateIndex]
+                                : payment.amount;
 
-                                        return (
-                                            <div
-                                                key={`${payment.id}-${dateKey}`}
-                                                className="p-4 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100"
-                                            >
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
-                                                        <h4 className="text-base font-semibold text-gray-900 mb-2">
-                                                            {payment.client_name}
-                                                        </h4>
-                                                        <div className="space-y-2">
-                                                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <IndianRupee className="w-4 h-4" />
-                                                                    <span className="font-medium">₹{displayAmount.toFixed(2)}</span>
-                                                                </div>
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <span className="capitalize">{payment.payment_method.replace('_', ' ')}</span>
-                                                                </div>
-                                                                <div className="flex items-center gap-1.5 text-gray-500">
-                                                                    <Users className="w-4 h-4" />
-                                                                    <span>{payment.created_by_name || 'Not tracked'}</span>
-                                                                </div>
-                                                            </div>
-                                                            {payment.comments && (
-                                                                <div className="text-sm text-gray-600 italic bg-gray-50 px-3 py-2 rounded border-l-2 border-emerald-500">
-                                                                    {payment.comments}
-                                                                </div>
-                                                            )}
-                                                        </div>
+                            return (
+                                <div
+                                    key={`${payment.id}-${dateKey}`}
+                                    className="p-4 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100 relative group"
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Calendar className="w-4 h-4 text-emerald-600" />
+                                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{displayDate}</span>
+                                            </div>
+                                            <h4 className="text-base font-semibold text-gray-900 mb-2">
+                                                {payment.client_name}
+                                            </h4>
+                                            <div className="space-y-2">
+                                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <IndianRupee className="w-4 h-4" />
+                                                        <span className="font-medium">₹{displayAmount.toFixed(2)}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-2 ml-4">
-                                                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full whitespace-nowrap capitalize">
-                                                            {payment.frequency.replace('-', ' ')}
-                                                        </span>
-                                                        {isPaymentDatePassed && canEdit && (
-                                                            <button
-                                                                onClick={() => onToggleStatus(payment, dateKey)}
-                                                                disabled={status === 'paid'}
-                                                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${status === 'paid'
-                                                                    ? 'bg-green-600 text-white cursor-not-allowed opacity-90'
-                                                                    : 'bg-orange-500 text-white hover:bg-orange-600 cursor-pointer'
-                                                                    }`}
-                                                                title={status === 'paid' ? 'Payment already marked as paid' : 'Mark as paid'}
-                                                            >
-                                                                {status === 'paid' ? 'Paid' : 'Unpaid'}
-                                                            </button>
-                                                        )}
-                                                        {isPaymentDatePassed && isViewer && (
-                                                            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${status === 'paid'
-                                                                ? 'bg-green-100 text-green-700'
-                                                                : 'bg-orange-100 text-orange-700'
-                                                                }`}>
-                                                                {status === 'paid' ? 'Paid' : 'Unpaid'}
-                                                            </span>
-                                                        )}
-                                                        {canEdit && (
-                                                            <button
-                                                                onClick={() => onEdit(payment)}
-                                                                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                aria-label="Modify payment"
-                                                                title="Modify"
-                                                            >
-                                                                <Pencil className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-                                                        {canDelete && (
-                                                            <button
-                                                                onClick={() => onDelete(payment.id)}
-                                                                className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                                aria-label="Delete payment"
-                                                                title="Delete"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        )}
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="capitalize">{payment.payment_method.replace('_', ' ')}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-gray-500">
+                                                        <Users className="w-4 h-4" />
+                                                        <span>{payment.created_by_name || 'Not tracked'}</span>
                                                     </div>
                                                 </div>
+                                                {payment.comments && (
+                                                    <div className="text-sm text-gray-600 italic bg-gray-50 px-3 py-2 rounded border-l-2 border-emerald-500">
+                                                        {payment.comments}
+                                                    </div>
+                                                )}
                                             </div>
-                                        );
-                                    })}
+                                        </div>
+                                        <div className="flex items-center gap-2 ml-4">
+                                            <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full whitespace-nowrap capitalize">
+                                                {payment.frequency.replace('-', ' ')}
+                                            </span>
+                                            {canEdit && (
+                                                <button
+                                                    onClick={() => {
+                                                        if (status === 'unpaid') {
+                                                            setSelectedPayment({ payment, dateKey });
+                                                            setMethodModalOpen(true);
+                                                        }
+                                                    }}
+                                                    disabled={status === 'paid'}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${status === 'paid'
+                                                        ? 'bg-green-600 text-white cursor-not-allowed opacity-90'
+                                                        : 'bg-orange-500 text-white hover:bg-orange-600 cursor-pointer'
+                                                        }`}
+                                                    title={status === 'paid' ? 'Payment already marked as paid' : 'Mark as paid'}
+                                                >
+                                                    {status === 'paid' ? 'Paid' : 'Unpaid'}
+                                                </button>
+                                            )}
+                                            {isViewer && (
+                                                <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${status === 'paid'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-orange-100 text-orange-700'
+                                                    }`}>
+                                                    {status === 'paid' ? 'Paid' : 'Unpaid'}
+                                                </span>
+                                            )}
+                                            {canEdit && (
+                                                <button
+                                                    onClick={() => onEdit(payment)}
+                                                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    aria-label="Modify payment"
+                                                    title="Modify"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                            {canDelete && (
+                                                <button
+                                                    onClick={() => onDelete(payment.id)}
+                                                    className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    aria-label="Delete payment"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })}
+                    </div>
                 )}
             </div>
 
@@ -299,6 +335,21 @@ export function PaymentList({
                     </p>
                 </div>
             )}
+
+            <PaymentMethodModal
+                isOpen={methodModalOpen}
+                onClose={() => {
+                    setMethodModalOpen(false);
+                    setSelectedPayment(null);
+                }}
+                onSelect={(method: string) => {
+                    if (selectedPayment) {
+                        onToggleStatus(selectedPayment.payment, selectedPayment.dateKey, method);
+                        setMethodModalOpen(false);
+                        setSelectedPayment(null);
+                    }
+                }}
+            />
         </div>
     );
 }

@@ -17,19 +17,9 @@ export const useHistory = (user: AuthUser | null) => {
                 .order('start_date', { ascending: false })
                 .order('start_time', { ascending: false });
 
-            if (user.role === 'employee' || user.role === 'intern') {
-                const { data: userData } = await supabase
-                    .from('users')
-                    .select('client_access')
-                    .eq('id', user.id)
-                    .single();
-
-                const accessibleClients = userData?.client_access || [];
-                if (accessibleClients.length > 0) {
-                    query = query.in('client_name', accessibleClients);
-                } else {
-                    query = query.in('client_name', []);
-                }
+            if (user.role === 'associate-viewer') {
+                // Example of restricting access if needed for viewer
+                // For now, let's keep it simple or remove if not applicable
             }
 
             const { data, error } = await query;
@@ -106,6 +96,7 @@ export const useHistory = (user: AuthUser | null) => {
                 client_name: event.client_name,
                 start_date: event.start_date,
                 start_time: event.start_time,
+                end_time: event.end_time,
                 location: event.location,
                 agenda: event.agenda,
                 meeting_link: event.meeting_link,

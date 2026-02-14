@@ -119,7 +119,7 @@ export function usePayments(user: AuthUser | null) {
         await loadPayments();
     };
 
-    const togglePaymentStatus = async (payment: Payment, dueDate: string) => {
+    const togglePaymentStatus = async (payment: Payment, dueDate: string, method: string) => {
         const currentStatus = payment.payment_status[dueDate] || 'unpaid';
 
         if (currentStatus === 'paid') {
@@ -135,6 +135,7 @@ export function usePayments(user: AuthUser | null) {
             .from('payments')
             .update({
                 payment_status: updatedPaymentStatus,
+                payment_method: method,
             })
             .eq('id', payment.id);
 

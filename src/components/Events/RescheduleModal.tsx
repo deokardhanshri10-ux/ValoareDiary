@@ -9,7 +9,6 @@ interface RescheduleModalProps {
     isOpen: boolean;
     onClose: () => void;
     event: Event | null;
-    event: Event | null;
     onEventUpdated: () => void;
     user: AuthUser;
 }
@@ -18,12 +17,12 @@ export function RescheduleModal({
     isOpen,
     onClose,
     event,
-
     onEventUpdated,
     user
 }: RescheduleModalProps) {
     const [rescheduleDate, setRescheduleDate] = useState('');
     const [rescheduleTime, setRescheduleTime] = useState('');
+    const [rescheduleEndTime, setRescheduleEndTime] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { logActivity } = useActivityLog();
 
@@ -43,6 +42,7 @@ export function RescheduleModal({
             .update({
                 start_date: rescheduleDate,
                 start_time: rescheduleTime,
+                end_time: rescheduleEndTime || null,
             })
             .eq('id', event.id);
 
@@ -64,14 +64,17 @@ export function RescheduleModal({
             {
                 oldDate: event.date,
                 oldTime: event.time,
+                oldEndTime: event.endTime,
                 newDate: rescheduleDate,
-                newTime: rescheduleTime
+                newTime: rescheduleTime,
+                newEndTime: rescheduleEndTime
             }
         );
 
         onClose();
         setRescheduleDate('');
         setRescheduleTime('');
+        setRescheduleEndTime('');
         setIsSubmitting(false);
     };
 
@@ -85,6 +88,7 @@ export function RescheduleModal({
                             onClose();
                             setRescheduleDate('');
                             setRescheduleTime('');
+                            setRescheduleEndTime('');
                         }}
                         className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                         aria-label="Close modal"
@@ -107,18 +111,32 @@ export function RescheduleModal({
                             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         />
                     </div>
-                    <div>
-                        <label htmlFor="rescheduleTime" className="block text-sm font-medium text-gray-700 mb-2">
-                            New Time
-                        </label>
-                        <input
-                            type="time"
-                            id="rescheduleTime"
-                            value={rescheduleTime}
-                            onChange={(e) => setRescheduleTime(e.target.value)}
-                            required
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="rescheduleTime" className="block text-sm font-medium text-gray-700 mb-2">
+                                New Start Time
+                            </label>
+                            <input
+                                type="time"
+                                id="rescheduleTime"
+                                value={rescheduleTime}
+                                onChange={(e) => setRescheduleTime(e.target.value)}
+                                required
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="rescheduleEndTime" className="block text-sm font-medium text-gray-700 mb-2">
+                                New End Time
+                            </label>
+                            <input
+                                type="time"
+                                id="rescheduleEndTime"
+                                value={rescheduleEndTime}
+                                onChange={(e) => setRescheduleEndTime(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                            />
+                        </div>
                     </div>
 
                     <div className="flex items-center justify-end gap-3 pt-2">
@@ -128,6 +146,7 @@ export function RescheduleModal({
                                 onClose();
                                 setRescheduleDate('');
                                 setRescheduleTime('');
+                                setRescheduleEndTime('');
                             }}
                             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         >

@@ -95,15 +95,7 @@ export function PaymentModal({
         const form = e.currentTarget;
         const clientName = (form.elements.namedItem('clientName') as HTMLInputElement).value;
         const frequency = (form.elements.namedItem('frequency') as HTMLSelectElement).value;
-        const paymentMethod = (form.elements.namedItem('paymentMethod') as HTMLSelectElement).value;
-
-        // Comments field is only in edit modal in original code, but we can add it to both?
-        // Original code: `comments` only in `handleUpdatePayment`.
-        // Let's support it in both if we want, or stick to original.
-        // I'll add it to both for consistency if it's in the DB.
-        // The DB has `comments` column.
         const comments = (form.elements.namedItem('comments') as HTMLTextAreaElement)?.value || null;
-
         const validDueDates = dueDates.filter(date => date !== '');
 
         if (validDueDates.length === 0) {
@@ -137,16 +129,9 @@ export function PaymentModal({
                 .update({
                     client_name: clientName,
                     amount: singleAmount,
-                    amounts: amountsArray, // Original update didn't update amounts array?
-                    // Wait, handleUpdatePayment (line 1403) updates:
-                    // client_name, amount, due_dates, frequency, payment_method, comments.
-                    // It DOES NOT update 'amounts'. This might be a bug in original code or intended.
-                    // However, `handleAddPayment` inserts `amounts`.
-                    // If I change frequency to quarterly in edit, I should update amounts too.
-                    // I will include `amounts` in update to be safe and correct.
+                    amounts: amountsArray,
                     due_dates: validDueDates,
                     frequency: frequency,
-                    payment_method: paymentMethod,
                     comments: comments,
                 })
                 .eq('id', payment.id);
@@ -167,7 +152,7 @@ export function PaymentModal({
                     amounts: amountsArray,
                     due_dates: validDueDates,
                     frequency: frequency,
-                    payment_method: paymentMethod,
+                    payment_method: '', // Default to empty string for now
                     organisation_id: user.organisationId,
                     created_by_id: user.id,
                     created_by_name: user.fullName,
@@ -328,22 +313,6 @@ export function PaymentModal({
                                 </button>
                             )}
                         </div>
-                    </div>
-
-                    <div>
-                        <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mb-2">
-                            Paid Via
-                        </label>
-                        <select
-                            id="paymentMethod"
-                            name="paymentMethod"
-                            defaultValue={payment?.payment_method}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                        >
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="cash">Cash</option>
-                            <option value="upi">UPI</option>
-                        </select>
                     </div>
 
                     <div>

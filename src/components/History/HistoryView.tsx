@@ -18,6 +18,8 @@ export function HistoryView({ history, loading, user, onUploadMOM }: HistoryView
     const [dateFilter, setDateFilter] = useState<'all' | 'this_week' | 'this_month'>('all');
     const [typeFilter, setTypeFilter] = useState<'all' | 'online' | 'in_person' | 'on_call'>('all');
 
+    const canEdit = user.role === 'manager' || user.role === 'associate-editor';
+
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, historyId: string) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -74,7 +76,7 @@ export function HistoryView({ history, loading, user, onUploadMOM }: HistoryView
         }
     };
 
-    const handleViewMOMFile = async (filePath: string, fileName: string) => {
+    const handleViewMOMFile = async (filePath: string) => {
         try {
             const { data, error } = await supabase.storage
                 .from('mom-files')
@@ -224,12 +226,12 @@ export function HistoryView({ history, loading, user, onUploadMOM }: HistoryView
                                                         day: 'numeric'
                                                     })}
                                                     {' at '}
-                                                    {item.start_time}
+                                                    {item.start_time}{item.end_time ? ` - ${item.end_time}` : ''}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-1.5">
                                                 <MapPin className="w-4 h-4" />
-                                                <span>{item.location}</span>
+                                                <span>{item.location === 'Face to Face' ? 'In person' : item.location}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -261,25 +263,27 @@ export function HistoryView({ history, loading, user, onUploadMOM }: HistoryView
                                             <FileText className="w-4 h-4 text-amber-600" />
                                             Minutes of Meeting ({item.mom_files.length})
                                         </h4>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <label className={`cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors ${uploadingId === item.id ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                                <input
-                                                    type="file"
-                                                    className="hidden"
-                                                    onChange={(e) => handleFileChange(e, item.id)}
-                                                    disabled={uploadingId === item.id}
-                                                    accept=".pdf,.doc,.docx,.txt"
-                                                />
-                                                <div className="w-4 h-4">
-                                                    {uploadingId === item.id ? (
-                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-700"></div>
-                                                    ) : (
-                                                        <Plus className="w-4 h-4" />
-                                                    )}
-                                                </div>
-                                                {uploadingId === item.id ? 'Uploading...' : 'Add MOM'}
-                                            </label>
-                                        </div>
+                                        {canEdit && (
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <label className={`cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors ${uploadingId === item.id ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                    <input
+                                                        type="file"
+                                                        className="hidden"
+                                                        onChange={(e) => handleFileChange(e, item.id)}
+                                                        disabled={uploadingId === item.id}
+                                                        accept=".pdf,.doc,.docx,.txt"
+                                                    />
+                                                    <div className="w-4 h-4">
+                                                        {uploadingId === item.id ? (
+                                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-700"></div>
+                                                        ) : (
+                                                            <Plus className="w-4 h-4" />
+                                                        )}
+                                                    </div>
+                                                    {uploadingId === item.id ? 'Uploading...' : 'Add MOM'}
+                                                </label>
+                                            </div>
+                                        )}
                                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                             {item.mom_files.map((file, index) => (
                                                 <div
@@ -307,7 +311,7 @@ export function HistoryView({ history, loading, user, onUploadMOM }: HistoryView
                                                     </div>
                                                     <div className="flex items-center gap-1 pl-2 border-l border-gray-100 ml-2">
                                                         <button
-                                                            onClick={() => handleViewMOMFile(file.path, file.name)}
+                                                            onClick={() => handleViewMOMFile(file.path)}
                                                             className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors"
                                                             title="View file"
                                                         >
@@ -333,7 +337,7 @@ export function HistoryView({ history, loading, user, onUploadMOM }: HistoryView
                                     </p>
                                 )}
 
-                                {(!item.mom_files || item.mom_files.length === 0) && (
+                                {canEdit && (!item.mom_files || item.mom_files.length === 0) && (
                                     <div className="mt-2">
                                         <label className={`cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors ${uploadingId === item.id ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                             <input

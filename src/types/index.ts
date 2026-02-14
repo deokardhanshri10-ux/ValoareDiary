@@ -4,6 +4,7 @@ export interface Event {
   clientName: string;
   date: Date;
   time: string;
+  endTime?: string;
   location: string;
   agenda?: string;
   meetingLink?: string;
@@ -38,13 +39,7 @@ export interface Client {
   name: string;
   type: 'mutual_funds' | 'holistic';
   created_at: string;
-}
-
-export interface ClientNote {
-  id: string;
-  client_id: string;
-  note_content: string;
-  created_at: string;
+  organisation_id?: string;
 }
 
 export interface HistoryItem {
@@ -53,10 +48,11 @@ export interface HistoryItem {
   client_name: string;
   start_date: string;
   start_time: string;
+  end_time?: string;
   location: string;
   agenda: string;
   is_online?: boolean;
-  meeting_type?: string;
+  meeting_type?: 'online' | 'in_person' | 'on_call' | 'facetoface';
   meeting_link?: string;
   mom_files?: { name: string; path: string; size: number; uploadedAt?: string }[];
   attachments?: { name: string; path: string; size: number; uploadedAt?: string }[];

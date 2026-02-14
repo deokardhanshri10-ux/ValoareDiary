@@ -26,7 +26,7 @@ export function EventModal({
 
     if (!event) return null;
 
-    const canEdit = user.role === 'manager' || user.role === 'associate_editor';
+    const canEdit = user.role === 'manager' || user.role === 'associate-editor';
     const canDelete = user.role === 'manager';
 
     const now = new Date();
@@ -332,12 +332,16 @@ export function EventModal({
 
                         <div>
                             <span className="text-sm font-medium text-gray-500">Time</span>
-                            <p className="text-sm text-gray-900 mt-1">{event.time}</p>
+                            <p className="text-sm text-gray-900 mt-1">
+                                {event.time}{event.endTime ? ` - ${event.endTime}` : ''}
+                            </p>
                         </div>
 
                         <div>
                             <span className="text-sm font-medium text-gray-500">Location</span>
-                            <p className="text-sm text-gray-900 mt-1">{event.location}</p>
+                            <p className="text-sm text-gray-900 mt-1">
+                                {event.location === 'Face to Face' ? 'In person' : event.location}
+                            </p>
                         </div>
 
                         {event.isOnline && event.meetingLink && (
@@ -560,8 +564,8 @@ export function EventModal({
                                 onClick={handleAddMOM}
                                 disabled={momFiles.length === 0}
                                 className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${momFiles.length === 0
-                                        ? 'text-gray-400 bg-gray-200 cursor-not-allowed'
-                                        : 'text-white bg-amber-600 hover:bg-amber-700'
+                                    ? 'text-gray-400 bg-gray-200 cursor-not-allowed'
+                                    : 'text-white bg-amber-600 hover:bg-amber-700'
                                     }`}
                             >
                                 <FileText className="w-4 h-4" />

@@ -1,22 +1,30 @@
+import { useState } from 'react';
 import { Event, Payment } from '../../types';
 import { getDaysInMonth, calculateRecurringDates } from '../../utils/dateUtils';
+import { PaymentMethodModal } from '../Payments/PaymentMethodModal';
+import { AuthUser } from '../../lib/auth';
 
 interface CalendarViewProps {
     currentDate: Date;
     events: Event[];
     payments: Payment[];
+    user: AuthUser;
     onSelectEvent: (event: Event) => void;
-    onTogglePaymentStatus: (payment: Payment, dateKey: string) => void;
+    onTogglePaymentStatus: (payment: Payment, dateKey: string, method: string) => void;
 }
 
 export function CalendarView({
     currentDate,
     events,
     payments,
+    user,
     onSelectEvent,
     onTogglePaymentStatus,
 }: CalendarViewProps) {
+    const canEdit = user.role === 'manager' || user.role === 'associate-editor';
     const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate);
+    const [methodModalOpen, setMethodModalOpen] = useState(false);
+    const [selectedPayment, setSelectedPayment] = useState<{ payment: Payment, dateKey: string } | null>(null);
 
     const getEventsForDate = (day: number) => {
         return events.filter((event) => {
@@ -86,23 +94,26 @@ export function CalendarView({
                                     <div
                                         key={`${payment.id}-${dateKey}`}
                                         className={`text-xs px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-opacity ${status === 'paid'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-emerald-100 text-emerald-800'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-emerald-100 text-emerald-800'
                                             }`}
                                         title={`Payment: ${payment.client_name} - ₹${payment.amount} (${status})`}
                                     >
                                         <div className="flex items-center justify-between gap-1">
                                             <span>₹{payment.amount} - {payment.client_name}</span>
-                                            {isPaymentDateToday && (
+                                            {isPaymentDateToday && canEdit && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        onTogglePaymentStatus(payment, dateKey);
+                                                        if (status === 'unpaid') {
+                                                            setSelectedPayment({ payment, dateKey });
+                                                            setMethodModalOpen(true);
+                                                        }
                                                     }}
                                                     disabled={status === 'paid'}
                                                     className={`px-1.5 py-0.5 rounded text-xs font-medium ${status === 'paid'
-                                                            ? 'bg-green-600 text-white cursor-not-allowed opacity-90'
-                                                            : 'bg-orange-500 text-white hover:bg-orange-600 cursor-pointer'
+                                                        ? 'bg-green-600 text-white cursor-not-allowed opacity-90'
+                                                        : 'bg-orange-500 text-white hover:bg-orange-600 cursor-pointer'
                                                         }`}
                                                     title={status === 'paid' ? 'Payment already marked as paid' : 'Mark as paid'}
                                                 >
@@ -133,6 +144,21 @@ export function CalendarView({
                 ))}
             </div>
             <div className="grid grid-cols-7">{days}</div>
+
+            <PaymentMethodModal
+                isOpen={methodModalOpen}
+                onClose={() => {
+                    setMethodModalOpen(false);
+                    setSelectedPayment(null);
+                }}
+                onSelect={(method) => {
+                    if (selectedPayment) {
+                        onTogglePaymentStatus(selectedPayment.payment, selectedPayment.dateKey, method);
+                        setMethodModalOpen(false);
+                        setSelectedPayment(null);
+                    }
+                }}
+            />
         </div>
     );
 }
