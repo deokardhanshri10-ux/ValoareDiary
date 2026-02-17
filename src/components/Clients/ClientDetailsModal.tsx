@@ -314,6 +314,7 @@ export function ClientDetailsModal({
                         )}
                     </section>
 
+
                 </div>
             </div>
         </div >
