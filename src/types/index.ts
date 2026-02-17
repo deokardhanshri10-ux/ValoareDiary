@@ -49,6 +49,7 @@ export interface ClientNote {
   created_at: string;
   created_by_name?: string;
   created_by_id?: string;
+  organisation_id?: string;
 }
 
 export interface HistoryItem {
