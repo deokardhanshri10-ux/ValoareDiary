@@ -1,4 +1,4 @@
-import { X, Calendar, MapPin, Clock, Video, Link as LinkIcon, Edit, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Trash2, FileText } from 'lucide-react';
+import { X, Calendar, MapPin, Clock, Video, Link as LinkIcon, Edit, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Trash2, FileText, IndianRupee, ExternalLink, Download } from 'lucide-react';
 import { Client, Event, Payment, HistoryItem } from '../../types';
 import { supabase } from '../../lib/supabase';
 import { ClientNotesModal } from './ClientNotesModal';
