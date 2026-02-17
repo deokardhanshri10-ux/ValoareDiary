@@ -8,7 +8,7 @@ interface ClientNotesModalProps {
     onClose: () => void;
     clientName: string;
     notes: ClientNote[];
-    onAddNote: (content: string) => void;
+    onAddNote: (content: string) => Promise<void>;
     onDeleteNote: (noteId: string) => void;
     userRole?: string; // Add userRole prop for RBAC
     user: AuthUser | null;
@@ -24,8 +24,9 @@ export const ClientNotesModal: React.FC<ClientNotesModalProps> = ({
     userRole,
     user
 }) => {
-    console.log('ClientNotesModal render. Notes:', notes);
+    // console.log('ClientNotesModal render. Notes:', notes);
     const [newNote, setNewNote] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Determine if user has permission to add/delete notes
     // Viewer roles cannot modify notes
@@ -33,11 +34,19 @@ export const ClientNotesModal: React.FC<ClientNotesModalProps> = ({
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (newNote.trim()) {
-            onAddNote(newNote.trim());
-            setNewNote('');
+            setIsSubmitting(true);
+            try {
+                await onAddNote(newNote.trim());
+                setNewNote('');
+            } catch (error) {
+                console.error('Failed to add note:', error);
+                alert('Failed to save note. Please try again.');
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
 
@@ -106,14 +115,19 @@ export const ClientNotesModal: React.FC<ClientNotesModalProps> = ({
                                 value={newNote}
                                 onChange={(e) => setNewNote(e.target.value)}
                                 placeholder="Type a new note..."
-                                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2 border"
+                                disabled={isSubmitting}
+                                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2 border disabled:bg-gray-100 disabled:text-gray-500"
                             />
                             <button
                                 type="submit"
-                                disabled={!newNote.trim()}
+                                disabled={!newNote.trim() || isSubmitting}
                                 className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                             >
-                                <Plus size={20} className="mr-1" />
+                                {isSubmitting ? (
+                                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-1"></span>
+                                ) : (
+                                    <Plus size={20} className="mr-1" />
+                                )}
                                 Add Note
                             </button>
                         </form>

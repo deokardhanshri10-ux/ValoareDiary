@@ -150,175 +150,174 @@ export function ClientDetailsModal({
                             <FileText className="w-6 h-6 text-gray-600" />
                         </button>
                     </div>
-                </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto bg-gray-50 p-6 space-y-8">
+                    {/* Content */}
+                    <div className="flex-1 overflow-y-auto bg-gray-50 p-6 space-y-8">
 
-                    {/* Upcoming Meetings Section */}
-                    <section>
-                        <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-teal-600" />
-                            Upcoming Meetings ({upcomingEvents.length})
-                        </h3>
-                        {upcomingEvents.length === 0 ? (
-                            <p className="text-gray-500 text-sm ml-7">No upcoming meetings scheduled</p>
-                        ) : (
-                            <div className="space-y-3">
-                                {upcomingEvents.map(event => (
-                                    <div key={event.id} className="bg-white p-4 rounded-lg border border-gray-200">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                                <h4 className="font-medium text-gray-900 mb-2">{client.name}</h4>
-                                                <div className="flex items-center gap-4 text-sm text-gray-600">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Calendar className="w-4 h-4" />
-                                                        <span>{new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Clock className="w-4 h-4" />
-                                                        <span>{event.time}</span>
-                                                    </div>
-                                                </div>
-                                                {event.agenda && <p className="text-sm text-gray-600 mt-2">{event.agenda}</p>}
-                                            </div>
-                                            <span className="px-3 py-1 bg-gray-700 text-white rounded text-xs font-medium">
-                                                {event.isOnline ? 'Online' : event.location?.toLowerCase() === 'on call' ? 'On Call' : 'In Person'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </section>
-
-                    {/* Past Meetings Section */}
-                    <section>
-                        <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-gray-600" />
-                            Past Meetings ({clientHistory.length})
-                        </h3>
-                        {clientHistory.length === 0 ? (
-                            <p className="text-gray-500 text-sm ml-7">No past meeting history</p>
-                        ) : (
-                            <div className="space-y-3">
-                                {clientHistory.map(item => {
-                                    const meetingType = item.is_online ? 'Online' : item.meeting_type === 'on_call' ? 'On Call' : 'In Person';
-
-                                    return (
-                                        <div key={item.id} className="bg-white p-4 rounded-lg border border-gray-200">
-                                            <div className="flex justify-between items-start mb-3">
+                        {/* Upcoming Meetings Section */}
+                        <section>
+                            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <Calendar className="w-5 h-5 text-teal-600" />
+                                Upcoming Meetings ({upcomingEvents.length})
+                            </h3>
+                            {upcomingEvents.length === 0 ? (
+                                <p className="text-gray-500 text-sm ml-7">No upcoming meetings scheduled</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {upcomingEvents.map(event => (
+                                        <div key={event.id} className="bg-white p-4 rounded-lg border border-gray-200">
+                                            <div className="flex justify-between items-start">
                                                 <div className="flex-1">
                                                     <h4 className="font-medium text-gray-900 mb-2">{client.name}</h4>
                                                     <div className="flex items-center gap-4 text-sm text-gray-600">
                                                         <div className="flex items-center gap-1.5">
                                                             <Calendar className="w-4 h-4" />
-                                                            <span>{new Date(item.start_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                                                            <span>{new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
                                                         </div>
                                                         <div className="flex items-center gap-1.5">
                                                             <Clock className="w-4 h-4" />
-                                                            <span>{item.start_time}</span>
+                                                            <span>{event.time}</span>
                                                         </div>
                                                     </div>
-                                                    {item.agenda && <p className="text-sm text-gray-600 mt-2">{item.agenda}</p>}
+                                                    {event.agenda && <p className="text-sm text-gray-600 mt-2">{event.agenda}</p>}
                                                 </div>
                                                 <span className="px-3 py-1 bg-gray-700 text-white rounded text-xs font-medium">
-                                                    {meetingType}
+                                                    {event.isOnline ? 'Online' : event.location?.toLowerCase() === 'on call' ? 'On Call' : 'In Person'}
                                                 </span>
                                             </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
 
-                                            {item.mom_files && item.mom_files.length > 0 && (
-                                                <div className="pt-3 border-t border-gray-100">
-                                                    <h5 className="text-sm font-medium text-gray-700 mb-2">Minutes of Meeting:</h5>
-                                                    <div className="space-y-2">
-                                                        {item.mom_files.map((file, idx) => (
-                                                            <div key={idx} className="flex items-center justify-between p-2.5 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
-                                                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                                    <FileText className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                                                                        <p className="text-xs text-gray-500">
-                                                                            {file.size ? `${(file.size / 1024).toFixed(2)} KB` : ''}
-                                                                            {file.uploadedAt && ` • ${new Date(file.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(file.uploadedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`}
-                                                                        </p>
+                        {/* Past Meetings Section */}
+                        <section>
+                            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <Clock className="w-5 h-5 text-gray-600" />
+                                Past Meetings ({clientHistory.length})
+                            </h3>
+                            {clientHistory.length === 0 ? (
+                                <p className="text-gray-500 text-sm ml-7">No past meeting history</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {clientHistory.map(item => {
+                                        const meetingType = item.is_online ? 'Online' : item.meeting_type === 'on_call' ? 'On Call' : 'In Person';
+
+                                        return (
+                                            <div key={item.id} className="bg-white p-4 rounded-lg border border-gray-200">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex-1">
+                                                        <h4 className="font-medium text-gray-900 mb-2">{client.name}</h4>
+                                                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Calendar className="w-4 h-4" />
+                                                                <span>{new Date(item.start_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Clock className="w-4 h-4" />
+                                                                <span>{item.start_time}</span>
+                                                            </div>
+                                                        </div>
+                                                        {item.agenda && <p className="text-sm text-gray-600 mt-2">{item.agenda}</p>}
+                                                    </div>
+                                                    <span className="px-3 py-1 bg-gray-700 text-white rounded text-xs font-medium">
+                                                        {meetingType}
+                                                    </span>
+                                                </div>
+
+                                                {item.mom_files && item.mom_files.length > 0 && (
+                                                    <div className="pt-3 border-t border-gray-100">
+                                                        <h5 className="text-sm font-medium text-gray-700 mb-2">Minutes of Meeting:</h5>
+                                                        <div className="space-y-2">
+                                                            {item.mom_files.map((file, idx) => (
+                                                                <div key={idx} className="flex items-center justify-between p-2.5 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
+                                                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                                        <FileText className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                                                                        <div className="min-w-0 flex-1">
+                                                                            <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                                                                            <p className="text-xs text-gray-500">
+                                                                                {file.size ? `${(file.size / 1024).toFixed(2)} KB` : ''}
+                                                                                {file.uploadedAt && ` • ${new Date(file.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${new Date(file.uploadedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1 ml-2">
+                                                                        <button
+                                                                            onClick={() => handleViewMOMFile(file.path, file.name)}
+                                                                            className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors"
+                                                                            title="View"
+                                                                        >
+                                                                            <ExternalLink className="w-4 h-4" />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDownloadMOMFile(file.path, file.name)}
+                                                                            className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors"
+                                                                            title="Download"
+                                                                        >
+                                                                            <Download className="w-4 h-4" />
+                                                                        </button>
                                                                     </div>
                                                                 </div>
-                                                                <div className="flex items-center gap-1 ml-2">
-                                                                    <button
-                                                                        onClick={() => handleViewMOMFile(file.path, file.name)}
-                                                                        className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors"
-                                                                        title="View"
-                                                                    >
-                                                                        <ExternalLink className="w-4 h-4" />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleDownloadMOMFile(file.path, file.name)}
-                                                                        className="p-1.5 text-gray-400 hover:text-blue-600 rounded transition-colors"
-                                                                        title="Download"
-                                                                    >
-                                                                        <Download className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))}
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </section>
+
+                        {/* Scheduled Payments Section */}
+                        <section>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <IndianRupee className="w-5 h-5 text-emerald-600" />
+                                Scheduled Payments ({clientPayments.length})
+                            </h3>
+                            {clientPayments.length === 0 ? (
+                                <p className="text-gray-500 text-sm ml-7">No payments scheduled</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {clientPayments.map(payment => (
+                                        <div key={payment.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="font-bold text-gray-900">₹{payment.amount.toLocaleString()}</span>
+                                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">
+                                                    {payment.frequency}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-gray-500 mb-3">{payment.payment_method}</p>
+
+                                            <div className="space-y-2 border-t border-gray-100 pt-2">
+                                                {payment.due_dates.map((date, idx) => {
+                                                    const status = payment.payment_status[date] || 'pending';
+                                                    const isPaid = status === 'paid';
+                                                    return (
+                                                        <div key={idx} className="flex items-center justify-between text-sm">
+                                                            <span className="text-gray-600">{new Date(date).toLocaleDateString()}</span>
+                                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${isPaid
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : 'bg-yellow-100 text-yellow-700'
+                                                                }`}>
+                                                                {isPaid ? 'Paid' : 'Pending'}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </section>
-
-                    {/* Scheduled Payments Section */}
-                    <section>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <IndianRupee className="w-5 h-5 text-emerald-600" />
-                            Scheduled Payments ({clientPayments.length})
-                        </h3>
-                        {clientPayments.length === 0 ? (
-                            <p className="text-gray-500 text-sm ml-7">No payments scheduled</p>
-                        ) : (
-                            <div className="space-y-3">
-                                {clientPayments.map(payment => (
-                                    <div key={payment.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="font-bold text-gray-900">₹{payment.amount.toLocaleString()}</span>
-                                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">
-                                                {payment.frequency}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-gray-500 mb-3">{payment.payment_method}</p>
-
-                                        <div className="space-y-2 border-t border-gray-100 pt-2">
-                                            {payment.due_dates.map((date, idx) => {
-                                                const status = payment.payment_status[date] || 'pending';
-                                                const isPaid = status === 'paid';
-                                                return (
-                                                    <div key={idx} className="flex items-center justify-between text-sm">
-                                                        <span className="text-gray-600">{new Date(date).toLocaleDateString()}</span>
-                                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${isPaid
-                                                            ? 'bg-green-100 text-green-700'
-                                                            : 'bg-yellow-100 text-yellow-700'
-                                                            }`}>
-                                                            {isPaid ? 'Paid' : 'Pending'}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </section>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
 
 
+                    </div>
                 </div>
-            </div>
-        </div >
-            { showNotesModal && (
+            </div >
+            {showNotesModal && (
                 <ClientNotesModal
                     isOpen={showNotesModal}
                     onClose={() => setShowNotesModal(false)}
@@ -330,7 +329,7 @@ export function ClientDetailsModal({
                     user={user}
                 />
             )
-}
+            }
         </>
     );
 }
