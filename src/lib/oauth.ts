@@ -20,8 +20,9 @@ const GOOGLE_OAUTH_SCOPES = [
 
 export const oauthService = {
   initiateGoogleOAuth(userId: string, organisationId: string): void {
-    // Include the current origin in state so callback knows where to redirect
-    const returnUrl = window.location.origin;
+    // Include the current origin + path in state so callback knows where to redirect
+    // This is crucial for GitHub Pages where the app is in a subdirectory
+    const returnUrl = window.location.origin + window.location.pathname;
     const state = btoa(JSON.stringify({
       userId,
       organisationId,
