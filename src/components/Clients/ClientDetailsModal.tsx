@@ -329,6 +329,6 @@ export function ClientDetailsModal({
                     user={user}
                 />
             )}
-        </div >
+        </>
     );
 }
