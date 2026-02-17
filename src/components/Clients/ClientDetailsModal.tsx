@@ -1,4 +1,4 @@
-import { X, Calendar, MapPin, Clock, Video, Link as LinkIcon, Edit, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Trash2, FileText, IndianRupee, ExternalLink, Download } from 'lucide-react';
+import { Calendar, IndianRupee, Clock, FileText, ChevronLeft, ExternalLink, Download } from 'lucide-react';
 import { Client, Event, Payment, HistoryItem } from '../../types';
 import { supabase } from '../../lib/supabase';
 import { ClientNotesModal } from './ClientNotesModal';
@@ -316,8 +316,8 @@ export function ClientDetailsModal({
 
                 </div>
             </div>
-
-            {showNotesModal && (
+        </div >
+            { showNotesModal && (
                 <ClientNotesModal
                     isOpen={showNotesModal}
                     onClose={() => setShowNotesModal(false)}
@@ -328,7 +328,8 @@ export function ClientDetailsModal({
                     userRole={user?.role}
                     user={user}
                 />
-            )}
+            )
+}
         </>
     );
 }

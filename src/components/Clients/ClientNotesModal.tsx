@@ -24,6 +24,7 @@ export const ClientNotesModal: React.FC<ClientNotesModalProps> = ({
     userRole,
     user
 }) => {
+    console.log('ClientNotesModal render. Notes:', notes);
     const [newNote, setNewNote] = useState('');
 
     // Determine if user has permission to add/delete notes
