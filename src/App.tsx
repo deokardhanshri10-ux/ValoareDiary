@@ -189,6 +189,7 @@ export default function App({
         events={events}
         history={history}
         payments={payments}
+        user={user}
       />
 
 

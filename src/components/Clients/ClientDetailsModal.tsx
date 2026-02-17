@@ -1,6 +1,10 @@
 import { Calendar, IndianRupee, Clock, FileText, ChevronLeft, ExternalLink, Download } from 'lucide-react';
 import { Client, Event, Payment, HistoryItem } from '../../types';
 import { supabase } from '../../lib/supabase';
+import { ClientNotesModal } from './ClientNotesModal';
+import { useClientNotes } from '../../hooks/useClientNotes';
+import { AuthUser } from '../../lib/auth';
+import { useState, useEffect } from 'react';
 
 interface ClientDetailsModalProps {
     isOpen: boolean;
@@ -9,6 +13,7 @@ interface ClientDetailsModalProps {
     events: Event[];
     history: HistoryItem[];
     payments: Payment[];
+    user: AuthUser | null;
 }
 
 export function ClientDetailsModal({
@@ -18,7 +23,16 @@ export function ClientDetailsModal({
     events,
     history,
     payments,
+    user
 }: ClientDetailsModalProps) {
+    const [showNotesModal, setShowNotesModal] = useState(false);
+    const { notes, addNote, deleteNote, loadNotes } = useClientNotes(user);
+
+    useEffect(() => {
+        if (client) {
+            loadNotes(client.id);
+        }
+    }, [client, loadNotes]);
 
     if (!isOpen || !client) return null;
 
@@ -116,6 +130,13 @@ export function ClientDetailsModal({
                                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             >
                                 <ChevronLeft className="w-6 h-6 text-gray-600" />
+                            </button>
+                            <button
+                                onClick={() => setShowNotesModal(true)}
+                                className="p-2 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors"
+                                title="Client Notes"
+                            >
+                                <FileText className="w-6 h-6 text-gray-600" />
                             </button>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">{client.name}</h1>
@@ -294,6 +315,18 @@ export function ClientDetailsModal({
                     </div>
                 </div>
             </div>
+            {showNotesModal && (
+                <ClientNotesModal
+                    isOpen={showNotesModal}
+                    onClose={() => setShowNotesModal(false)}
+                    clientName={client.name}
+                    notes={notes}
+                    onAddNote={(content) => addNote(client.id, content)}
+                    onDeleteNote={(noteId) => deleteNote(noteId, client.id)}
+                    userRole={user?.role}
+                    user={user}
+                />
+            )}
         </>
     );
 }

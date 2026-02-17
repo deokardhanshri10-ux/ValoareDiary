@@ -42,6 +42,15 @@ export interface Client {
   organisation_id?: string;
 }
 
+export interface ClientNote {
+  id: string;
+  client_id: string;
+  content: string;
+  created_at: string;
+  created_by_name?: string;
+  created_by_id?: string;
+}
+
 export interface HistoryItem {
   id: string;
   original_event_id: string;
