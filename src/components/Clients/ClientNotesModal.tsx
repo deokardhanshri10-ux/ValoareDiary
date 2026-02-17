@@ -91,7 +91,7 @@ export const ClientNotesModal: React.FC<ClientNotesModalProps> = ({
                                         </button>
                                     )}
                                 </div>
-                                <p className="text-gray-700 whitespace-pre-wrap">{note.content}</p>
+                                <p className="text-gray-700 whitespace-pre-wrap">{note.note_content}</p>
                             </div>
                         ))
                     )}

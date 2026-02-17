@@ -45,7 +45,7 @@ export interface Client {
 export interface ClientNote {
   id: string;
   client_id: string;
-  content: string;
+  note_content: string;
   created_at: string;
   created_by_name?: string;
   created_by_id?: string;

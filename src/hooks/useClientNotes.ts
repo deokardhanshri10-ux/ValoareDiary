@@ -34,7 +34,7 @@ export function useClientNotes(user: AuthUser | null) {
             .from('client_notes')
             .insert({
                 client_id: clientId,
-                content,
+                note_content: content,
                 created_by_id: user.id,
                 created_by_name: user.fullName,
                 organisation_id: user.organisationId
